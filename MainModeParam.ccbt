@@ -1,0 +1,16 @@
+BigEndian();
+u32 Size;
+LittleEndian();
+u32 Version;
+u32 Count;
+// a wrench
+u64 First Pointer;
+
+for (i = 0; i < 5; i++) {
+    u64 Part [i]; // another wrench
+    string Panel Id [i];
+    for (j = 0; j < 3; j++) {
+        uint64 Page [i];
+    }
+    string Boss Panel [i];
+}
