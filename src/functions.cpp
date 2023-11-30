@@ -114,6 +114,9 @@ std::string readCCBT(std::istream& file, std::string type) {
     while (any_of(file.peek(), ' ', '\n')) {
         file.ignore(1);
     }
+    if (file.eof()) {
+        return "EOF";
+    }
     if (file.peek() == '/') {
         file.ignore(1);
         if (file.peek() == '/') {

@@ -1,42 +1,19 @@
 #include "templates.h"
 #include "../functions.h"
 
-json UnpackBinary(std::istream& input, std::string fileType) {
-    // Move past XFBIN fluff - Needs to be replaced later with actual XFBIN parsing
-    input.seekg(276);
+std::unordered_map<int, std::tuple<std::string, std::string, std::string>> var;
+std::unordered_map<std::string, int> local_var;
 
-    // An easy way to know the size of each data type from strings
-    std::unordered_map<std::string, int> varSize;
-    varSize["uint8"] = 1, varSize["u8"] = 1;
-    varSize["uint16"] = 2, varSize["u16"] = 2;
-    varSize["uint32"] = 4, varSize["u32"] = 4;
-    varSize["uint64"] = 8, varSize["u64"] = 8;
-    varSize["int8"] = 1, varSize["i8"] = 1;
-    varSize["int16"] = 2, varSize["i16"] = 2;
-    varSize["int32"] = 4, varSize["i32"] = 4;
-    varSize["int64"] = 8, varSize["i64"] = 8;
-    varSize["half_float"] = 2, varSize["hf"] = 2;
-    varSize["float"] = 4, varSize["f"] = 4;
-    varSize["double"] = 8, varSize["d"] = 8;
-
-    json JsonData; // Where the JSON data will be stored
-    JsonData["Filetype"] = fileType; // So the parser can know what filetype it's dealing with automatically
-
+int GetTemplateVariables(std::string fileType) {
     // Try to open matching CCBT
     std::ifstream ccbt(fileType + ".ccbt");
     if (!ccbt.is_open()) {
         sendError("Could not locate \"" + fileType + ".ccbt\".");
-        return 0; // !! need to add error functionality to main.cpp
+        return -1; // !! need to add error functionality to main.cpp
     }
 
     // Variables to be used in the CCBT parsing
-    std::unordered_map<int, std::tuple<std::string, std::string, std::string>> var;
     std::string varType, varName, varValue;
-    std::unordered_map<std::string, int> temp_var; // For temporary variables
-    uint8_t buffer8;
-    uint16_t buffer16;
-    uint32_t buffer32;
-    uint64_t buffer64;
 
     // To keep track of the curly braces/brackets
     std::stack<int> curly_braces;
@@ -66,11 +43,11 @@ json UnpackBinary(std::istream& input, std::string fileType) {
         // If key word detected
         if (varType == "for") {
             varName = readCCBT(ccbt, "for init var"); // Get initalising variable name
-            temp_var[varName] = std::stoi(readCCBT(ccbt, "for init val")); // Get init var value (int)
+            local_var[varName] = std::stoi(readCCBT(ccbt, "for init val")); // Get init var value (int)
             varValue = readCCBT(ccbt, "for rest"); // Get rest of for loop parameter data
 
             var.insert(std::make_pair(i, createTuple("for {", varName, varValue)));
-            std::cout << "For: " << varName << " = " << temp_var[varName] << "\nData: " << varValue << "\n\n";
+            std::cout << "For: " << varName << " = " << local_var[varName] << "\nData: " << varValue << "\n\n";
             curly_braces.push(i);
             continue;
         }
@@ -90,30 +67,67 @@ json UnpackBinary(std::istream& input, std::string fileType) {
 
         // Check the variable name
         varName = readCCBT(ccbt, "name");
+        if (varName == "EOF") {
+            break;
+        }
         varValue = "";
-        // if (any_of(varType, "string", "str")) {
-        //     varValue = returnPointer(input);
-        // } else {
-        //     if (varSize[varType] == 1) {
-        //         parse(input, buffer8, varSize[varType]);
-        //         varValue = std::to_string(buffer8);
-        //     } else if (varSize[varType] == 2) {
-        //         parse(input, buffer16, varSize[varType]);
-        //         varValue = std::to_string(buffer16);
-        //     } else if (varSize[varType] == 4) {
-        //         parse(input, buffer32, varSize[varType]);
-        //         varValue = std::to_string(buffer32);
-        //     } else if (varSize[varType] == 8) {
-        //         parse(input, buffer64, varSize[varType]);
-        //         varValue = std::to_string(buffer64);
-        //     }
-        // }
         ccbt.ignore(1);
 
         // Store the data for easy access later
         var.insert(std::make_pair(i, createTuple(varType, varName, varValue)));
+
     }
-    std::cout << "Test complete\n"; 
+    return 0;
+}
+
+json UnpackBinary(std::istream& input, std::string fileType) {
+    // Move past XFBIN fluff - Needs to be replaced later with actual XFBIN parsing
+    input.seekg(276);
+
+    // An easy way to know the size of each data type from strings
+    std::unordered_map<std::string, int> varSize;
+    varSize["uint8"] = 1, varSize["u8"] = 1;
+    varSize["uint16"] = 2, varSize["u16"] = 2;
+    varSize["uint32"] = 4, varSize["u32"] = 4;
+    varSize["uint64"] = 8, varSize["u64"] = 8;
+    varSize["int8"] = 1, varSize["i8"] = 1;
+    varSize["int16"] = 2, varSize["i16"] = 2;
+    varSize["int32"] = 4, varSize["i32"] = 4;
+    varSize["int64"] = 8, varSize["i64"] = 8;
+    varSize["half_float"] = 2, varSize["hf"] = 2;
+    varSize["float"] = 4, varSize["f"] = 4;
+    varSize["double"] = 8, varSize["d"] = 8;
+    uint8_t buffer8;
+    uint16_t buffer16;
+    uint32_t buffer32;
+    uint64_t buffer64;
+
+    json JsonData; // Where the JSON data will be stored
+    JsonData["Filetype"] = fileType; // So the parser can know what filetype it's dealing with automatically
+
+    if (GetTemplateVariables(fileType) == -1) {
+        return -1;
+    }
+
+    // if (any_of(varType, "string", "str")) {
+    //     varValue = returnPointer(input);
+    // } else {
+    //     if (varSize[varType] == 1) {
+    //         parse(input, buffer8, varSize[varType]);
+    //         varValue = std::to_string(buffer8);
+    //     } else if (varSize[varType] == 2) {
+    //         parse(input, buffer16, varSize[varType]);
+    //         varValue = std::to_string(buffer16);
+    //     } else if (varSize[varType] == 4) {
+    //         parse(input, buffer32, varSize[varType]);
+    //         varValue = std::to_string(buffer32);
+    //     } else if (varSize[varType] == 8) {
+    //         parse(input, buffer64, varSize[varType]);
+    //         varValue = std::to_string(buffer64);
+    //     }
+    // }
+
+    std::cout << "Test complete\n";
     system("pause");
     return 0;
 }
