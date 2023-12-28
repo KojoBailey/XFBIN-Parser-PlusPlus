@@ -52,12 +52,12 @@ To change the size of a pointer, you can either:
 
 ```cpp
 #pointer uint32 // Sets pointers to uint32
-#pointer i64 	// Sets pointers to int64
+#pointer i64    // Sets pointers to int64
 #pointer double // Sets pointers to double
 
 #pointer string // This won't work
-#pointer char	// This will set to uint8 instead
-#pointer ptr	// This will just default
+#pointer char   // This will set to uint8 instead
+#pointer ptr    // This will just default
 ```
 
 ### Char & String
@@ -76,9 +76,9 @@ In cases where strings don't have space between them, you can choose to specify 
 
 ```cpp
 // Data is "5bct01Bruno BucciaratiSticky Fingers\0";
-string6 Char_ID;	// "5bct01"
-str16 Char_Name;	// "Bruno Bucciarati"
-chars Stand_Name; 	// "Sticky Fingers"
+string6 Char_ID;  // "5bct01"
+str16 Char_Name;  // "Bruno Bucciarati"
+chars Stand_Name; // "Sticky Fingers"
 ```
 
 Notice that the last string doesn't need a specified length since the string ends with an empty byte (`\0`) anyway. Also notice how this syntax works for any varation of the `string` data type.
@@ -86,8 +86,8 @@ Notice that the last string doesn't need a specified length since the string end
 Although the default delimiter for strings is `\0`, you can change this using `#string_delim`.
 
 ```cpp
-#string_delim '\n'	// Separates strings by new-lines instead
-#string_delim "XX"	// Separates strings by 2 'X's
+#string_delim '\n' // Separates strings by new-lines instead
+#string_delim "XX" // Separates strings by 2 'X's
 ```
 
 ### Raw Hex Bytes
@@ -97,7 +97,7 @@ To define a raw hex byte type, use either `raw` or `hex` followed by the **numbe
 // Data is 0x0EFA9D42
 hex32 a; // 0x0EFA
 raw16 b; // 0x9D
-hex c;	// 0x42 [end of data]
+hex c;   // 0x42 [end of data]
 ```
 
 Byte data is **stored** in an **unsigned integer** of corresponding size. However, when **written** to JSON, it is converted to a **string**. It will then be converted back when put into binary.
