@@ -103,3 +103,31 @@ hex c;   // 0x42 [end of data]
 Byte data is **stored** in an **unsigned integer** of corresponding size. However, when **written** to JSON, it is converted to a **string**. It will then be converted back when put into binary.
 
 All of this conversion is done in **big endian** (left-to-right) for the littlest confusion.
+
+## Variables
+Like with BT files, variables **defined normally** will be **read** from whatever input file in the **order** which they are written, and can then be used as if they were normal variables without any effect on the reading afterwards. Note that these *cannot* be **custom-defined**.
+
+Then, `local` variables will have **no impact** on the reading, and *can* be custom-defined.
+
+
+### Local Variables
+```cpp
+uint32 Entry_Count;
+for (local int i = 0; i < Entry_Count; i++) {
+	// Define entry variables
+}
+```
+```cpp
+uint32 Entry_Count;
+local int = 0;
+while (i < Entry_Count) {
+	// Define entry variables
+	i++;
+}
+```
+By default, defined `local` variables are **guaranteed** to be **empty** (`0` for numerical variables and `""` for chars and strings).
+
+However, you *cannot* have **raw hex data** for `local` variables. Instead, use unsigned integers. Also, keep in mind that `int` still means `int32` in case you want to pass values between data types.
+
+### Variable Names
+When converting to JSON, any underscores (`_`) will be turned into spaces. To prevent this, use `\_`.
