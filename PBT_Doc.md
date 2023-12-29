@@ -9,7 +9,7 @@ This doc outlines all the **syntax** for in PBT files, outlining the similaritie
 ## Structure
 First of all, PBTs do not require any access point other than the start of the file itself. This means no `int main()` or anything to start. Trying to do this will simply create a new function that you'll have to manually call.
 
-Next, although the syntax of PBT is based on C, it does not have support for C or C++ libraries, and `#include` will therefore not work. The same goes for the other `#` commands, like `#define` or `#using`. However, PBT does have its own `#` commands.
+Next, although the syntax of PBT is based on C, it does not have support for C or C++ libraries, and `#include` will therefore not work with them. Similarly, not all C++ `#` preprocessors will work, although some and more do as documented below.
 
 Likewise, do not expect everything from C's standard library to work. Namespaces aren't used either, so you aren't able to write things like `std::string` (however, see below for the supported data types, as `string` is one of them).
 
@@ -53,16 +53,6 @@ To change the size of a pointer, you can either:
 - Specify in the type name, like `ptr32` or `pointer64`.
 - Use `#pointer` at the top of the file. This works with any numerical data type.
 
-```cpp
-#pointer uint32 // Sets pointers to uint32
-#pointer i64    // Sets pointers to int64
-#pointer double // Sets pointers to double
-
-#pointer string // This won't work
-#pointer char   // This will set to uint8 instead
-#pointer ptr    // This will just default
-```
-
 ### Boolean
 
 These are **32-bit** by default, but can be changed by specifying the number of bits (e.g. `bool64` for 64-bits or 8 bytes).
@@ -97,12 +87,7 @@ chars Stand_Name; // "Sticky Fingers"
 
 Notice that the last string doesn't need a specified length since the string ends with an empty byte (`\0`) anyway. Also notice how this syntax works for any varation of the `string` data type.
 
-Although the default delimiter for strings is `\0`, you can change this using `#string_delim`.
-
-```cpp
-#string_delim '\n' // Separates strings by new-lines instead
-#string_delim "XX" // Separates strings by 2 'X's
-```
+Although the default delimiter for strings is `\0`, you can change this using `#str_delim`.
 
 ### Raw Hex Bytes
 
@@ -120,9 +105,9 @@ Byte data is **stored** in an **unsigned integer** of corresponding size. Howeve
 All of this conversion is done in **big endian** (left-to-right) for the littlest confusion.
 
 ## Variables
-Like with BT files, variables **defined normally** will be **read** from whatever input file in the **order** which they are written, and can then be used as if they were normal variables without any effect on the reading afterwards. Note that these *cannot* be **custom-defined**.
+Like with BT files, variables **defined normally** will be **read** from whatever input file in the **order** which they are written, and can then be used as if they were normal variables without any effect on the reading afterwards.
 
-Then, `local` variables will have **no impact** on the reading, and *can* be custom-defined.
+Then, `local` variables have **no impact** on the reading.
 
 
 ### Local Variables
@@ -173,13 +158,135 @@ for (local int i; i < Count; i++) {
 	char Alt printf("Costume #%c", 'A' + i);
 }
 ```
-```json
+```jsonc
 {
 	"Entry Count": 392,
 	"Character ID 1": "1jnt01",
 	"Costume ID 1": "A",
 	"Character ID 2": "1zpl01",
 	"Costume ID 2": "B",
-	...
+	// ...
 }
+```
+
+### Definitions
+Both normal and local variables can be custom-defined, although be aware that assigning a value to a normal variable will override whatever value it read from the input file.
+
+```cpp
+uint32 HP "Health"; // 80
+HP = 100; // Now 100
+```
+```json
+{ "Health": 100 }
+```
+
+## Preprocessors \#
+As mentioned towards the top, not all C/C++ `#` preprocessors work in PBT, and the ones that do may have some differences.
+
+Here is the full list of available preprocessors grouped by relevance, with explanations for each further down:
+- `#file`, `#extension`
+- `#include`, `#include_all`, `#public_all`, `#private_all`
+- `#define`
+- `#pointer`
+- `#str_delim`
+
+### #file
+Initially, the parser will search for a PBT of the same name as the input file (minus the file extensions of course). If it finds a PBT, it will then look for the `#file` tag to determine whether the file truly matches or not.
+
+Therefore, `#file` should contain the intended matching file name in a string.
+
+```cpp
+// MainModeParam.bt
+#file "MainModeParam.bin.xfbin";
+```
+
+Note that `#file` must end with a semicolon (`;`). This is because you can state more than one file as well.
+
+```cpp
+#file "MainModeParam.bin.xfbin", "MainModeParam.binary";
+```
+
+To make this more useful, you can use `__FILE__` which returns a string containing the full name of the input file.
+
+```cpp
+#file "MainModeParam.bin.xfbin", "MainModeParam.binary";
+#include "xfbin.bt"
+
+if (__FILE__ == "MainModeParam.bin.xfbin") {
+	GetXfbinChunk(1);
+}
+```
+
+You can also use `__NAME__` if you only want the file name without any extension(s).
+
+### #extension
+This is similar to `#file`, although only checks the **file extension**. Similarly, you can use `__EXTENSION__` to grab the file extension.
+
+Note that `#file` takes **priority** over this, and `#extension` will only be used when no matching `#file` can be found, or if the **user** chooses to specifically parse by extension instead.
+
+### #include
+Used similarly as C, although to include **`.pbt`** files instead of `.h` or `.hpp`.
+
+All **functions** are **public** by default, allowing use in any PBT that includes its file of origin. This can be changed, however, by setting it to `private` instead.
+
+```cpp
+// xfbin.bt
+uint64 GetChunkPos(int chunk) {
+	return /* a position */;
+}
+
+private void DoThing() {
+	/* do something */
+}
+
+
+// MainModeParam.bt
+#include "xfbin.bt"
+
+void DoThing() {
+	/* do something else */
+}
+// Note that this won't be shared with xfbin.bt as it's not included
+
+GetChunkPos(1);
+DoThing();
+```
+
+On the other hands, all **variables** are **private** by default, but can be done so by using `public`.
+
+```cpp
+// xfbin.bt
+public uint64 TotalFileSize "Total File Size";
+public local uint64 TrueDataSize = TotalFileSize - 42;
+
+// MainModeParam.bt
+#include "MainModeParam.bt"
+/* TotalFileSize and TrueDataSize can now be used */
+```
+
+Changing a variable in one file *will* affect that variable in other files too. This can be prevented by simply creating a **private copy** of that variable.
+
+`#public_all` will set everything in a PBT to public, and `#private_all` will set everything to private. You can also use `#include_all "file.pbt"` to override and take everything as public.
+
+On that note, `public` and `private` do not exist for security or gatekeeping. They are simply descriptors for the preset availability of variables and functions.
+
+### #pointer
+Sets the default type for the pointer data type to use.
+
+```cpp
+#pointer uint32 // Sets pointers to uint32
+#pointer i64    // Sets pointers to int64
+#pointer double // Sets pointers to double
+
+#pointer string // This won't work
+#pointer char   // This will set to uint8 instead
+#pointer ptr    // This will just default uint64
+```
+
+### #str_delim
+Changes the string delimiter from default `\0` to something else.
+
+```cpp
+#string_delim '\n' // Separates strings by new-lines instead
+#string_delim "XX" // Separates strings by 2 'X's
 ```
