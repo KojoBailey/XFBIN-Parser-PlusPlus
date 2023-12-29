@@ -20,18 +20,21 @@ The **full list** of supported data types is as follows:
  - **Signed Byte** (8-bits) → `int8`, `i8`, `byte`
  - **Unsigned Byte** (8-bits) → `uint8`, `u8`, `ubyte`
  - **Signed Short** (16-bits) → `int16`, `i16`, `short`
- - **Unsigned Short** (16-bits) → `uint16`, `u16`, `ushort`
- - **Signed Int** (32-bits) → `int32`, `i32`, `int`, `long`
- - **Unsigned Int** (32-bits) → `uint32`, `u32`, `uint`, `ulong`
- - **Signed Int64** (64-bits) → `int64`, `i64`, `longlong`
- - **Unsigned Int64** (64-bits) → `uint64`, `u64`, `ulonglong`
- - **Pointer** → `ptr`, `pointer` (see below)
+ - **Unsigned Short** (16-bits) → `uint16`, `u16`, `ushort`, `word`
+ - **Signed Int** (32-bits) → `int32`, `i32`, `int`, `long`, `long32`
+ - **Unsigned Int** (32-bits) → `uint32`, `u32`, `uint`, `ulong`, `ulong32`, `dword`, `dword32`
+ - **Signed Int64** (64-bits) → `int64`, `i64`, `longlong`, `long64`
+ - **Unsigned Int64** (64-bits) → `uint64`, `u64`, `ulonglong`, `ulong64`, `qword`, `dword64`, `dwordlong`
+ - **Pointer** (see below) → `ptr`, `pointer`
+ - **Boolean** (see below) → `bool`, `boolean`
  - **Float** (32-bits) → `float`
- - **Double** (64-bits) → `double`
- - **Half Float** (16-bits) → `half`, `halffloat`
+ - **Double** (64-bits) → `double`, `float64`
+ - **Half Float** (16-bits) → `half`, `halffloat`, `float16`
  - **Char** (8-bits) → `char`
- - **String** → `string`, `str`, `chars` (see below)
- - **Raw Hex Bytes** → `raw#`, `hex#` (see below)
+ - **String** (see below) → `string`, `str`, `chars`
+ - **Raw Hex Bytes** (see below) → `raw`, `hex`
+
+All of these names can also be used in **uppercase** (e.g. `UINT64`). Plus, you can add up to **2 underscores** (`__`) before each name (e.g. `__int64` - Windows stuff).
 
 Which name you use for each data type is completely up to you, and you're free to mix them up as you please.
 
@@ -60,15 +63,26 @@ To change the size of a pointer, you can either:
 #pointer ptr    // This will just default
 ```
 
+### Boolean
+
+These are **32-bit** by default, but can be changed by specifying the number of bits (e.g. `bool64` for 64-bits or 8 bytes).
+
 ### Char & String
-Unlike C++ chars and strings, **both quotation marks** can be used **interchangably**.
+Unlike C++ chars and strings, **both quotation marks** can be used **interchangably** in cases where it **doesn't matter**.
 
 ```cpp
 char Costume = "C";
 string Name = 'Order of Darkness';
 ```
 
-Despite this difference though, `char` and `string` are still treated differently.
+Where it *does* matter though, they will have **different effects**.
+
+```cpp
+'A' + 2 = 'C'
+"A" + 2 = "A2"
+```
+
+Despite these changes though, `char` and `string` are still treated separately.
 - `char` is limited to one character and will only be read and written as such.
 - `string` can be any length, and is automatically read from a file until reaching an empty byte (`'\0'` or `0x00`). When writing, an empty byte will also be dropped at the end of the string within the output file.
 
@@ -91,7 +105,8 @@ Although the default delimiter for strings is `\0`, you can change this using `#
 ```
 
 ### Raw Hex Bytes
-To define a raw hex byte type, use either `raw` or `hex` followed by the **number of bits** to read/write. By default, this will be **64 bits** (8 bytes). Only **8**, **16**, **32**, & **64** bits are valid.
+
+These are **64-bit** by default, but can be changed by specifying the number of bits (e.g. `hex8` for 8-bits or 1 byte). Only 1, 2, 4, and 8 bytes are allowed.
 
 ```cpp
 // Data is 0x0EFA9D42
@@ -130,4 +145,41 @@ By default, defined `local` variables are **guaranteed** to be **empty** (`0` fo
 However, you *cannot* have **raw hex data** for `local` variables. Instead, use unsigned integers. Also, keep in mind that `int` still means `int32` in case you want to pass values between data types.
 
 ### Variable Names
-When converting to JSON, any underscores (`_`) will be turned into spaces. To prevent this, use `\_`.
+When converting to JSON, any underscores (`_`) will be automatically turned into spaces.
+
+```cpp
+int Test_Variable;
+```
+```json
+{ "Test Variable": 0 }
+```
+
+However, in order to provide the most flexibility with JSON display names while still keeping PBT script names easy-to-use, you have the option to put any string after the variable's name to determine the JSON display name.
+
+```cpp
+int TestVar "Test Variable";
+local int store = TestVar;
+```
+```json
+{ "Test Variable": 0 }
+```
+
+Because of this, you more or less have full control over the displayed variable names, similar to the `<name="text">` tag in BT files, although with different syntax and a bit more control.
+
+```cpp
+uint64 Count "Entry Count";
+for (local int i; i < Count; i++) {
+	string Char_ID "Character ID " + (i + 1);
+	char Alt printf("Costume #%c", 'A' + i);
+}
+```
+```json
+{
+	"Entry Count": 392,
+	"Character ID 1": "1jnt01",
+	"Costume ID 1": "A",
+	"Character ID 2": "1zpl01",
+	"Costume ID 2": "B",
+	...
+}
+```
