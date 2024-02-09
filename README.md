@@ -1,9 +1,37 @@
 # CyberConnect2 XFBIN Parser++
-This tool was originally made for *JoJo's Bizarre Adventure: All-Star Battle R*, but support for others games may be possible in the no-so-distant future.
+<!--
+[![GitHub Downloads](https://img.shields.io/github/downloads/KojoBailey/XFBIN-Parser-PlusPlus/total)](https://github.com/KojoBailey/XFBIN-Parser-PlusPlus/releases)
+-->
+This tool aims to be the **ultimate parser** for the **XFBIN** file container format created by **CyberConnect2**, used in the games developed in their own engine, sometimes referred to as the **NU** engine.
 
-Currently, this tool is being overhauled to support external template files which will make adding file support **significantly** easier in the future, so the tool is currently unusable. However, you can track the progress if you'd like!
+For those unfamiliar, XFBIN files use the `.xfbin` file extension, and contain the magic (first 4 bytes of a file) `NUCC`. They are a container since they contain other file data within them in **chunks** (such as `nuccChunkBinary` and `nuccChunkModel`).
 
-All the information and instructions below are for what *will* work soon enough.
+What this tool does is **extract** these chunks by separating them into different files for easier viewing, replacing, or removing; it is similar to the [XFBIN Parser by SutandoTsukai181](https://github.com/SutandoTsukai181/xfbin_lib). It then goes a step further and offers to convert any `nuccChunkBinary` to **JSON**, a format that is much easier to read and edit quickly.
+
+<details>
+<summary><b>See an example of JSON</b></summary>
+
+<br/>This data isn't taken from any particular file. Notice how **easy** it would be to edit the different parameters, as well as how useful it can be just to read them for understanding.
+```json
+{
+  "Metadata": {
+    "Name": "example",
+    "Type": "nuccChunkBinary",
+    "Path": "cmnparam/bin/230/example.bin"
+  },
+  "Some Character ID": "4tno01",
+  "Random Number": 1987,
+  "An Array": {
+    "Bing": "bong",
+    "Magic Number": 23
+  },
+  "Some String": "Do you believe in \"gravity\"?",
+  "Some Japanese String": "調理場という所は... バイキンが一番の敵デスッ！"
+}
+```
+</details>
+
+Since every `nuccChunkBinary` is different, separate functions need to be defined for the conversion of each one. Currently, I as the creator of this tool am focusing on support for data from *JoJo's Bizarre Adventure: All-Star Battle R*, but adding support for other games will also be possible eventually - faster with contributions from others.
 
 ## Conversion
 To convert a file **to JSON or back**, simply _drag_ the file you want onto the EXE.
