@@ -1,4 +1,4 @@
-# CC2 Parser Plus
+# CyberConnect2 XFBIN Parser++
 This tool was originally made for *JoJo's Bizarre Adventure: All-Star Battle R*, but support for others games may be possible in the no-so-distant future.
 
 Currently, this tool is being overhauled to support external template files which will make adding file support **significantly** easier in the future, so the tool is currently unusable. However, you can track the progress if you'd like!
