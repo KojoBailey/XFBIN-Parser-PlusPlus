@@ -15,13 +15,16 @@ using json = nlohmann::ordered_json;
 inline bool bigEndian;
 #define IS_BIG_ENDIAN (std::endian::native == std::endian::big)
 
-#define DefInt(type, var) \
+// function macros
+#define DefineVectorInt(type, var) \
     type var; \
-    parseInt(var, data, pos)
-
-#define Skip(val) pos+=val
-
+    parseVectorInt(var, data)
+#define Skip(val) Pos+=val
 #define str(x) std::to_string(x)
+#define j_get(Type) template get<Type>()
+
+// Keep track of file data position.
+extern int Pos;
 
 void BigEndian();
 void LittleEndian();
@@ -36,16 +39,33 @@ T toLittleEndian(T value) {
 }
 
 template <std::integral T>
-void parseInt(T& var, std::vector<char>& data, int& pos) {
-    std::memcpy(&var, &data[pos], sizeof(var));
+void parseVectorInt(T& var, std::vector<char>& data) {
+    std::memcpy(&var, &data[Pos], sizeof(var));
     if (bigEndian == true) var = toBigEndian(var); else var = toLittleEndian(var);
-    pos += sizeof(var);
+    Pos += sizeof(var);
 }
-std::string parseChar(int size, std::vector<char>& data, int& pos);
+std::string parseVectorChar(int size, std::vector<char>& data);
+
+std::string Format3Digits(int number);
 
 json Unpack_xfbin(std::string name, std::vector<char>& data);
+struct chunk_struct {
+	json JsonData;
+	std::string Size;
+	std::string Type;
+	std::string Path;
+	std::string Name;
+};
+chunk_struct Unpack_chunkInfo(std::vector<char>& data, json& XfbinJson, size_t& map_index_offset, int chunk_i);
+json ExtractPageData(std::vector<char>& data, json& XfbinJson, size_t& map_index_offset, size_t& extra_index_offset);
 void ExtractData(std::vector<char>& data, json XfbinJson, std::ofstream& out_file);
-json Unpack_ASBR_sndcmnparam(std::vector<char>& data, json XfbinJson, int index);
+json UnpackChunkData(std::vector<char>& data, json& XfbinJson, size_t index, std::string chunk_path, std::string game);
+struct plugin_metadata {
+    const char** games;
+	size_t games_count;
+    const char** paths;
+	size_t paths_count;
+};
 
 class File {
 public:
@@ -87,21 +107,68 @@ public:
 
 	void Unpack() {
 		std::string directory = name + "\\";
+		std::string page_directory;
+		std::string directory_name;
+		std::string directory_type;
+		size_t map_index_offset = 0;
+		size_t extra_index_offset = 0;
+
+		// Create base directory and extract XFBIN header information
 		fs::create_directory(directory);
-		out_file.open(directory + "_XFBIN.json");
+		out_file.open(directory + "_xfbin.json");
 		json XfbinJson = Unpack_xfbin(name + extension, data);
 		out_file << XfbinJson.dump(2);
 		out_file.close();
 
-		directory += "[000] " + name + " (nuccChunkBinary)\\";
-		fs::create_directory(directory);
-		out_file.open(directory + name + ".json");
-		if (name == "sndcmnparam") {
-            out_file << Unpack_ASBR_sndcmnparam(data, XfbinJson, 1).dump(2);
+		// Create chunk page directories
+		std::ofstream page;
+		int page_i = 0;
+		while (data.begin() + Pos != data.end()) {
+			page_directory = directory + Format3Digits(page_i) + "\\";
+			fs::create_directory(page_directory);
+
+			// Create _page.json information
+			json PageJson;
+			bool page_end = false;
+			int save_pos;
+			page.open(page_directory + "_page.json");
+			std::vector<chunk_struct> ChunkData;
+			for (int chunk_i = 0; !page_end; chunk_i++) {
+				// Get chunk information
+				ChunkData.push_back(Unpack_chunkInfo(data, XfbinJson, map_index_offset, chunk_i));
+				PageJson.merge_patch(ChunkData[chunk_i].JsonData);
+				if (ChunkData[chunk_i].Type == "nuccChunkPage") {
+					page_end = true;
+					PageJson.merge_patch(ExtractPageData(data, XfbinJson, map_index_offset, extra_index_offset));
+				} else {
+					// Get chunk data
+					if (ChunkData[chunk_i].Type != "nuccChunkNull") {
+						// Extract to JSON.
+						save_pos = Pos; // Save current position.
+						out_file.open(page_directory + ChunkData[chunk_i].Name + ".json");
+						out_file << UnpackChunkData(data, XfbinJson, map_index_offset, name, "ASBR").dump(2); // Unpack chunk's data via plugins.
+						out_file.close();
+
+						// Extract to binary.
+						Pos = save_pos; // Reset to saved position.
+						out_file.open(page_directory + ChunkData[chunk_i].Name + ".binary", std::ios::binary);
+						ExtractData(data, XfbinJson, out_file);
+						out_file.close();
+					}
+				}
+			}
+			page << PageJson.dump(2);
+			page.close();
+			
+			// Rename directory depending on chunks
+			for (int directory_i = 0; ChunkData[directory_i].Type == "nuccChunkNull";) {
+				directory_i++;
+				directory_name = ChunkData[directory_i].Name;
+				directory_type = ChunkData[directory_i].Type;
+			}
+			fs::rename(page_directory, 
+				directory + "[" + Format3Digits(page_i++) + "] " + directory_name + " (" + directory_type + ")\\"
+			);
 		}
-		out_file.close();
-		out_file.open(directory + name + ".binary", std::ios::binary);
-		ExtractData(data, XfbinJson, out_file);
-		out_file.close();
 	}
 };

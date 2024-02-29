@@ -18,6 +18,12 @@ public:
 		std::cerr << "\033[31m" << buffer << "\033[0m";
 		file << buffer;
 	}
+
+	void Success(std::string message) {
+		std::string buffer = "> SUCCESS: " + message + "\n";
+		std::cerr << "\033[32m" << buffer << "\033[0m";
+		file << buffer;
+	}
 };
 
 void End(int exitCode = 0);
