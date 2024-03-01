@@ -19,12 +19,15 @@ inline bool bigEndian;
 #define DefineVectorInt(type, var) \
     type var; \
     parseVectorInt(var, data)
-#define Skip(val) Pos+=val
+
+#define FSkip(val) file_pos+=val
+
 #define str(x) std::to_string(x)
+
 #define j_get(Type) template get<Type>()
 
 // Keep track of file data position.
-extern int Pos;
+extern int file_pos;
 
 void BigEndian();
 void LittleEndian();
@@ -40,9 +43,9 @@ T toLittleEndian(T value) {
 
 template <std::integral T>
 void parseVectorInt(T& var, std::vector<char>& data) {
-    std::memcpy(&var, &data[Pos], sizeof(var));
+    std::memcpy(&var, &data[file_pos], sizeof(var));
     if (bigEndian == true) var = toBigEndian(var); else var = toLittleEndian(var);
-    Pos += sizeof(var);
+    file_pos += sizeof(var);
 }
 std::string parseVectorChar(int size, std::vector<char>& data);
 
@@ -123,7 +126,7 @@ public:
 		// Create chunk page directories
 		std::ofstream page;
 		int page_i = 0;
-		while (data.begin() + Pos != data.end()) {
+		while (data.begin() + file_pos != data.end()) {
 			page_directory = directory + Format3Digits(page_i) + "\\";
 			fs::create_directory(page_directory);
 
@@ -144,13 +147,13 @@ public:
 					// Get chunk data
 					if (ChunkData[chunk_i].Type != "nuccChunkNull") {
 						// Extract to JSON.
-						save_pos = Pos; // Save current position.
+						save_pos = file_pos; // Save current position.
 						out_file.open(page_directory + ChunkData[chunk_i].Name + ".json");
 						out_file << UnpackChunkData(data, XfbinJson, map_index_offset, name, "ASBR").dump(2); // Unpack chunk's data via plugins.
 						out_file.close();
 
 						// Extract to binary.
-						Pos = save_pos; // Reset to saved position.
+						file_pos = save_pos; // Reset to saved position.
 						out_file.open(page_directory + ChunkData[chunk_i].Name + ".binary", std::ios::binary);
 						ExtractData(data, XfbinJson, out_file);
 						out_file.close();

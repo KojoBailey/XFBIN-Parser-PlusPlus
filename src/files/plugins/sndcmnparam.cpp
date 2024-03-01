@@ -2,9 +2,11 @@
 
 #include "dll.h"
 
+int file_pos;
+
 plugin_metadata get_plugin_metadata() {
     std::vector<const char*> v_games = {"ASB", "ASBR"};
-    std::vector<const char*> v_paths = {"bin"};
+    std::vector<const char*> v_paths = {"sndcmnparam", "battle"};
 
     return create_metadata(v_games, v_paths);
 }

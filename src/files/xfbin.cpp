@@ -1,7 +1,7 @@
 #include "../logger.h"
 #include "files.h"
 
-int Pos = 0;
+int file_pos = 0;
 
 void BigEndian() {
     bigEndian = true;
@@ -14,17 +14,17 @@ std::string parseVectorChar(int size, std::vector<char>& data) {
     std::string buffer = "";
     if (size > 0) {
         for (int i = 0; i < size; i++) {
-            if (data[Pos] != '\0') {
-                buffer += data[Pos];
+            if (data[file_pos] != '\0') {
+                buffer += data[file_pos];
             }
-            Pos++;
+            file_pos++;
         }
     } else {
-        for (int i = 0; data[Pos] != '\0'; i++) {
-            buffer += data[Pos];
-            Pos++;
+        for (int i = 0; data[file_pos] != '\0'; i++) {
+            buffer += data[file_pos];
+            file_pos++;
         }
-        Pos++;
+        file_pos++;
     }
     return buffer;
 }
@@ -57,7 +57,7 @@ json Unpack_xfbin(std::string name, std::vector<char>& data) {
     
     BigEndian();
     DefineVectorInt(uint32_t, FileId);
-    Skip(8);
+    FSkip(8);
     DefineVectorInt(uint32_t, ChunkTableSize);
     DefineVectorInt(uint32_t, MinPageSize);
     DefineVectorInt(uint16_t, FileId2);
@@ -89,8 +89,8 @@ json Unpack_xfbin(std::string name, std::vector<char>& data) {
     for (size_t i = 0; i < ChunkNameCount; i++) {
         ChunkName.push_back(parseVectorChar(0, data));
     }
-    Pos--;
-    Skip(4 - (Pos % 4));
+    file_pos--;
+    FSkip(4 - (file_pos % 4));
         // Chunk Maps
     struct ChunkMapData {
         uint32_t ChunkTypeIndex;
@@ -253,13 +253,13 @@ json ExtractPageData(std::vector<char>& data, json& XfbinJson, size_t& map_index
 }
 
 void ExtractData(std::vector<char>& data, json XfbinJson, std::ofstream& out_file) {
-    Skip(-12);
+    FSkip(-12);
     BigEndian();
     DefineVectorInt(uint32_t, ChunkSize);
-    Skip(8);
+    FSkip(8);
 
     for (size_t i = 0; i < ChunkSize; i++) {
-        out_file << data[Pos];
-        Pos++;
+        out_file << data[file_pos];
+        file_pos++;
     }
 }

@@ -27,7 +27,7 @@ json UnpackChunkData(std::vector<char>& chunk_data, json& XfbinJson, size_t inde
     plugin_metadata this_metadata;
     for ( const auto& file : fs::recursive_directory_iterator("plugins") ) {
         // Load DLL library.
-        auto library = LoadLibrary(file.path().c_str());
+        auto library = LoadLibrary(file.path().string().c_str());
 
         // Get DLL metadata.
         const auto get_plugin_metadata = ( plugin_metadata (*)() )GetProcAddress(library, "get_plugin_metadata");
@@ -42,4 +42,5 @@ json UnpackChunkData(std::vector<char>& chunk_data, json& XfbinJson, size_t inde
         }
         FreeLibrary(library);
     }
+    return nullptr;
 }

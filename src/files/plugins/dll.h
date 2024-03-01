@@ -1,6 +1,13 @@
 #pragma once
 
-#include "./files.h"
+#include "../files.h"
+
+void BigEndian() {
+    bigEndian = true;
+}
+void LittleEndian() {
+    bigEndian = false;
+}
 
 #define DefineInt(type, var) \
     type var; \
@@ -17,26 +24,26 @@ plugin_metadata create_metadata(std::vector<const char*>& v_games, std::vector<c
 
 template <std::integral T>
 void parse_array_int(T& var, const char* data) {
-    std::memcpy(&var, &data[Pos], sizeof(var));
+    std::memcpy(&var, &data[file_pos], sizeof(var));
     if (bigEndian == true) var = toBigEndian(var); else var = toLittleEndian(var);
-    Pos += sizeof(var);
+    file_pos += sizeof(var);
 }
 
 std::string parse_array_char(int size, const char* data) {
     std::string buffer = "";
     if (size > 0) {
         for (int i = 0; i < size; i++) {
-            if (data[Pos] != '\0') {
-                buffer += data[Pos];
+            if (data[file_pos] != '\0') {
+                buffer += data[file_pos];
             }
-            Pos++;
+            file_pos++;
         }
     } else {
-        for (int i = 0; data[Pos] != '\0'; i++) {
-            buffer += data[Pos];
-            Pos++;
+        for (int i = 0; data[file_pos] != '\0'; i++) {
+            buffer += data[file_pos];
+            file_pos++;
         }
-        Pos++;
+        file_pos++;
     }
     return buffer;
 }
