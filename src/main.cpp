@@ -6,35 +6,31 @@ constexpr bool IsAnyOf(const T& cmp, const Cs& ... others) {
 	return ((cmp == others) || ...);
 }
 
-void End(int exitCode) {
-    std::cout << "Press enter to exit...";
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    std::exit(exitCode);
-}
-
 int main(int argc, char* argv[]) {
-	// For logging useful information.
-	Log log;
-	log.file.open("Log.txt");
+	std::cout << "  ~  XFBIN Parser++  ~\n\n"; // header
 
 	// If file not dragged onto EXE.
 	if (argc < 2) {
-		log.Error("No file input.");
-		End();
+		LOG_CRITICAL("No input file detected. Drag it onto this tool's EXE to get started!");
 	}
 
-	// Get input file.
-	File input;
-	if (input.LoadFile(argv[1]) == -1) {
-		log.Error("\"" + input.name + input.extension + "\" could not be located or opened.\n");
-		End();
-	}
-	if (!IsAnyOf(input.extension, ".json", ".xfbin", ".bin.xfbin")) {
-		log.Error("File must be in the format of JSON or XFBIN.");
-		End();
-	}
-	input.ReadFileToVector();
-	log.Send("File \"" + input.name + input.extension + "\" successfully loaded. Preparing to parse...");
+	// Store input path to variable.
+	fs::path input_path = argv[1];
 
-	input.Unpack();
+	// Create main XFBIN object.
+	XFBIN xfbin;
+
+	// Load XFBIN.
+	if (input_path.extension() == ".xfbin") {
+		LOG_INFO("XFBIN file detected. Loading data...");
+		LOG_VERBOSE("Attempting to load `" + input_path.filename().string() + "` from path `" + input_path.string() + "`.");
+		xfbin.Load_XFBIN(input_path, "xfbin");
+	} else if (input_path.extension() == "") {
+		LOG_INFO("Directory detected. Loading data...");
+		LOG_VERBOSE("Attempting to load `_xfbin.json` from directory `" + input_path.string() + "`.");
+		xfbin.Load_XFBIN(input_path / "_xfbin.json", "json");
+	} else {
+		LOG_CRITICAL("Invalid input type. Must be XFBIN or an unpacked directory.");
+	}
+	End_Program();
 }

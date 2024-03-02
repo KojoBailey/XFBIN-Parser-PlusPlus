@@ -1,54 +1,15 @@
 #include "../logger.h"
 #include "files.h"
 
-int file_pos = 0;
-
-void BigEndian() {
-    bigEndian = true;
-}
-void LittleEndian() {
-    bigEndian = false;
-}
-
-std::string parseVectorChar(int size, std::vector<char>& data) {
-    std::string buffer = "";
-    if (size > 0) {
-        for (int i = 0; i < size; i++) {
-            if (data[file_pos] != '\0') {
-                buffer += data[file_pos];
-            }
-            file_pos++;
-        }
-    } else {
-        for (int i = 0; data[file_pos] != '\0'; i++) {
-            buffer += data[file_pos];
-            file_pos++;
-        }
-        file_pos++;
-    }
-    return buffer;
-}
-std::string Format3Digits(int number) {
-    if (number < 10)
-        return "00" + std::to_string(number);
-    else if (number < 100)
-        return "0" + std::to_string(number);
-    else
-        return std::to_string(number);
-}
-
-json Unpack_xfbin(std::string name, std::vector<char>& data) {
-    Log log;
-    log.file.open("Log.txt", std::ios::app);
-
+// Extract XFBIN metadata to JSON.
+json Get_XFBIN_Meta(std::string name, std::vector<char>& data) {
     json JsonData;
 
     std::string Magic = parseVectorChar(4, data);
     if (Magic != "NUCC") {
-        log.Error("Magic \"NUCC\" not found. File is either encrypted or not a valid XFBIN.");
-        End();
+        LOG_CRITICAL("Magic \"NUCC\" not found. File is either encrypted or not a valid XFBIN.");
     }
-    log.Send("Parsing XFBIN metadata...");
+    LOG_INFO("Parsing XFBIN metadata...");
 
     struct ExtraMapIndices {
         uint32_t ExtraNameIndex;
@@ -177,8 +138,7 @@ json Unpack_xfbin(std::string name, std::vector<char>& data) {
         JsonChunkTable["Extra Map Indices"]["Extra Map Indices " + str(i)]["Extra Map Index"] = ExtraMapIndex[i].ExtraMapIndex;
     }
 
-    log.Success("XFBIN metadata output as \"_xfbin.json\".");
-    log.file.close();
+    LOG_SUCCESS("XFBIN metadata output as \"_xfbin.json\".");
     return JsonData;
 }
 
