@@ -10,7 +10,7 @@
 namespace fs = std::filesystem;
 
 void End_Program(int exitCode) {
-    std::cout << "Press Enter to exit...";
+    std::cout << "\nPress Enter to exit...";
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::exit(exitCode);
 }
@@ -75,7 +75,10 @@ void Log_Output(log_level level, const std::string& message, const std::string& 
     log_file.flush();
 
     // Output log to console.
-    std::cout << final_log_str;
+    static const std::string level_console_colours[7] = { "0;31", "0;31", "1;33", "1;31", "1;36", "0;32", "0" };
+    std::cout << "\033[" + level_console_colours[level] + "m" + final_log_str + "\033[0m";
+
+    // If critical error, end program.
     if (level == LOG_LEVEL_CRITICAL) {
         End_Program();
     }

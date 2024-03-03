@@ -12,7 +12,7 @@ void LittleEndian() {
 }
 
 // Parsing vector char data.
-std::string parseVectorChar(int size, std::vector<char>& data) {
+std::string Parse_String(int size, std::vector<char>& data) {
     std::string buffer = "";
     if (size > 0) {
         for (int i = 0; i < size; i++) {
@@ -39,4 +39,11 @@ std::string Format3Digits(int number) {
         return "0" + std::to_string(number);
     else
         return std::to_string(number);
+}
+
+void Read_File_To_Vector(std::ifstream& file, std::vector<char>& vector_data) {
+	vector_data.clear();
+	while (file.peek() != EOF) {
+		vector_data.push_back(file.get());
+	}
 }
