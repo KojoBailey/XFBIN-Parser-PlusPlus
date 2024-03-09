@@ -2,16 +2,16 @@
 #include "files.h"
 
 void Page::Unpack(size_t index) {
-    LOG_VERBOSE("Attempting to unpack page " + str(index) + "...");
+    LOG_VERBOSE("Attempting to unpack page " + to_string(index) + "...");
 
     // Unpack chunk data.
     for (size_t i = 0; true; i++) {
-        LOG_VERBOSE("Unpacking chunk " + str(i) + " from page " + str(index) + ".");
+        LOG_VERBOSE("Unpacking chunk " + to_string(i) + " from page " + to_string(index) + ".");
         chunks.push_back({});
         chunks[i].Load_Binary(chunk_map_offset, extra_map_offset);
 
         // Store metadata to page JSON.
-        auto& chunk_metadata = metadata["Chunk " + str(i)];
+        auto& chunk_metadata = metadata["Chunk " + to_string(i)];
         chunk_metadata["Type"] = chunks[i].type;
         chunk_metadata["Name"] = chunks[i].name;
         chunk_metadata["Path"] = chunks[i].path;
@@ -33,7 +33,7 @@ void Page::Unpack(size_t index) {
         }
     }
         // Create directory.
-    fs::path directory = xfbin.name + "\\[" + Format3Digits(index) + "] " + chunks[page_title_index].name + " (" + chunks[page_title_index].type + ")";
+    fs::path directory = xfbin.name + "\\[" + Format_3_Digits(index) + "] " + chunks[page_title_index].name + " (" + chunks[page_title_index].type + ")";
     LOG_VERBOSE("Creating directory `" + directory.string() + "`...");
     fs::create_directory(directory);
     if (!fs::exists(directory)) {
@@ -54,7 +54,7 @@ void Page::Unpack(size_t index) {
     output_file.close();
         // Increase global map index offsets.
     xfbin.chunk_map_offset += chunk_map_offset;
-    LOG_VERBOSE("Increased chunk map offset by " + str(chunk_map_offset) + ".");
+    LOG_VERBOSE("Increased chunk map offset by " + to_string(chunk_map_offset) + ".");
     xfbin.extra_map_offset += extra_map_offset;
-    LOG_VERBOSE("Increased extra map offset by " + str(extra_map_offset) + ".");
+    LOG_VERBOSE("Increased extra map offset by " + to_string(extra_map_offset) + ".");
 }

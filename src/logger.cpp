@@ -20,7 +20,7 @@ std::string THIS_PROJECT_NAME = "Xfbin Parser++";
 #define PROJECT_NAME "Xfbin Parser++"
 
 // Log file.
-static std::ofstream log_file;
+std::ofstream log_file;
 
 // Load configuration data.
 log_configs log_config;
@@ -29,7 +29,7 @@ void Load_Log_Config() {
     if (!fs::exists("XfbinParser.cfg")) {
         std::cout << "> Config file not found. Creating new `XfbinParser.cfg` with defaults.\n";
         std::ofstream config_file("XfbinParser.cfg");
-        config_file << "show_levels = true\nshow_warns = true\nshow_verbose = false\nshow_debug = false";
+        config_file << "show_levels = 1\nshow_warns = 1\nshow_verbose = 1\nshow_debug = 1";
         config_file.close();
     }
 

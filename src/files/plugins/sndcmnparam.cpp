@@ -1,38 +1,60 @@
 // sndcmnparam.dll
 
 #include "dll.h"
-
-int file_pos;
+#include "../../logger.h"
 
 plugin_metadata get_plugin_metadata() {
-    std::vector<const char*> v_games = {"ASB", "ASBR"};
-    std::vector<const char*> v_paths = {"sndcmnparam", "battle"};
+    // Supported games.
+    std::vector<std::string> games = {"ASB", "ASBR"};
 
-    return create_metadata(v_games, v_paths);
+    // Supported internal file paths.
+    std::vector<std::string> paths;
+    std::vector<std::string> regex_paths = {
+        "cmnparam/bin/XXX/battle.bin",
+        "cmnparam/bin/XXX/commse0.bin",
+        "cmnparam/bin/XXX/gimmick.bin",
+        "cmnparam/bin/XXX/player.bin",
+        "cmnparam/bin/XXX/sd01a_mob.bin",
+        "cmnparam/bin/XXX/sd02a_mob.bin",
+        "cmnparam/bin/XXX/sd03b_mob.bin",
+        "cmnparam/bin/XXX/sd04a_mob.bin",
+        "cmnparam/bin/XXX/sd04b_mob.bin",
+        "cmnparam/bin/XXX/sd05a_mob.bin",
+        "cmnparam/bin/XXX/sd06a_mob.bin",
+        "cmnparam/bin/XXX/sd06b_mob.bin",
+        "cmnparam/bin/XXX/sd07a_mob.bin",
+        "cmnparam/bin/XXX/sd08a_mob.bin"
+    };
+    std::vector<std::string> supported_versions = {"100", "110", "130", "140", "150", "160", "170", "200", "210", "220", "230"};
+    Regex_Add_Paths(paths, regex_paths, supported_versions);
+
+    return create_metadata(games, paths);
 }
 
-const char* unpack(const char* data, const char* str_xfbin_json, int index) {
-    json XfbinJson = json::parse(str_xfbin_json);
-    json OutputJson;
+const char* unpack(const char* data) {
+    // Define globals.
+    chunk_data = data;
+    chunk_pos = 0;
 
-    BigEndian();
-    DefineInt(uint32_t, Size);
-    LittleEndian();
-    DefineInt(uint16_t, Count);
+    /* DEFINE VARIABLES */
+        auto size = Parse<uint32>(BIG); // BIG → Total file size.
+        auto count = Parse<uint16>(LITTLE); // LITTLE → Entry count.
+        LOG_DEBUG(str(count));
 
-    auto& ChunkTable = XfbinJson["Chunk Table"];
-    std::string Type = str(ChunkTable["Chunk Maps"]["Chunk Map " + str(index)]["Chunk Type Index"].template get<int>());
-    OutputJson = {
-        {"Metadata", {
-            {"Name", ChunkTable["Chunk Names"]["Chunk Name " + str(index)]},
-            {"Type", ChunkTable["Chunk Types"]["Chunk Type " + Type]},
-            {"Path", ChunkTable["File Paths"]["File Path " + str(index)]}
-        }}
-    };
+        std::vector<string> entries; // List of audio name IDs.
+        for (auto i = 0; i < count; i++) {
+            entries.push_back(Parse<string>(32));
+        }
+    
+    /* DEFINE JSON */
+        json output_json = {
+            {"Entry Count", count}
+        };
+        for (auto i = 0; i < count; i++) {
+            LOG_DEBUG(entries[i]);
+            output_json["Entry " + str(i + 1)] = entries[i];
+        }
 
-    for (int i = 0; i < Count; i++) {
-        OutputJson["Entry " + str(i + 1)] = parse_array_char(32, data);
-    }
-
-    return OutputJson.dump().c_str();
+    // Allocate memory for string and return.
+    return JSON_to_C_Str(output_json);
 }

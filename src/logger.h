@@ -6,6 +6,8 @@
 // If project name is redefined differently from as in 'logger.cpp', will show in the logs.
 extern std::string THIS_PROJECT_NAME;
 
+extern std::ofstream log_file;
+
 // Log levels. Lower level = higher priority.
 typedef enum log_levels {
 	LOG_LEVEL_CRITICAL = 0,

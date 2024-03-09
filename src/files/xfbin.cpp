@@ -25,7 +25,7 @@ void XFBIN::Unpack() {
         
         // If end of file reached, exit loop.
         if ( !(file_pos < vector_data.size()) ) {
-            LOG_VERBOSE("End of file detected at " + str(file_pos) + " bytes.");
+            LOG_VERBOSE("End of file detected at " + to_string(file_pos) + " bytes.");
             break;
         }
     }
@@ -140,27 +140,27 @@ void XFBIN::Read_Metadata() {
     };
     auto& json_chunk_table = metadata["Chunk Table"];
     for (size_t i = 0; i < chunk_type_count; i++) {
-        json_chunk_table["Chunk Types"]["Chunk Type " + str(i)] = chunk_type[i];
+        json_chunk_table["Chunk Types"]["Chunk Type " + to_string(i)] = chunk_type[i];
     }
     for (size_t i = 0; i < file_path_count; i++) {
-        json_chunk_table["File Paths"]["File Path " + str(i)] = file_path[i];
+        json_chunk_table["File Paths"]["File Path " + to_string(i)] = file_path[i];
     }
     for (size_t i = 0; i < chunk_name_count; i++) {
-        json_chunk_table["Chunk Names"]["Chunk Name " + str(i)] = chunk_name[i];
+        json_chunk_table["Chunk Names"]["Chunk Name " + to_string(i)] = chunk_name[i];
     }
     for (size_t i = 0; i < chunk_map_count; i++) {
-        json_chunk_table["Chunk Maps"]["Chunk Map " + str(i)] = {
+        json_chunk_table["Chunk Maps"]["Chunk Map " + to_string(i)] = {
             {"Chunk Type Index", chunk_map[i].chunk_type_index},
             {"File Path Index", chunk_map[i].file_path_index},
             {"Chunk Name Index", chunk_map[i].chunk_name_index}
         };
     }
     for (size_t i = 0; i < chunk_map_index_count; i++) {
-        json_chunk_table["Chunk Map Indices"]["Chunk Map Index " + str(i)] = chunk_map_index[i];
+        json_chunk_table["Chunk Map Indices"]["Chunk Map Index " + to_string(i)] = chunk_map_index[i];
     }
     for (size_t i = 0; i < extra_map_indices_count; i++) {
-        json_chunk_table["Extra Map Indices"]["Extra Map Indices " + str(i)]["Extra Name Index"] = extra_map_indices[i].extra_name_index;
-        json_chunk_table["Extra Map Indices"]["Extra Map Indices " + str(i)]["Extra Map Index"] = extra_map_indices[i].extra_map_index;
+        json_chunk_table["Extra Map Indices"]["Extra Map Indices " + to_string(i)]["Extra Name Index"] = extra_map_indices[i].extra_name_index;
+        json_chunk_table["Extra Map Indices"]["Extra Map Indices " + to_string(i)]["Extra Map Index"] = extra_map_indices[i].extra_map_index;
     }
 
     chunk_map_offset = 0;
@@ -185,15 +185,15 @@ chunk_struct Unpack_chunkInfo(std::vector<char>& vector_data, json& XfbinJson, s
     Define_Int(uint16_t, Field0A);
 
     auto& ChunkTable = XfbinJson["Chunk Table"];
-    int ChunkMapPointer = ChunkTable["Chunk Map Indices"]["Chunk Map Index " + str(ChunkMapIndex + index_offset)];
-    auto& ChunkMap = ChunkTable["Chunk Maps"]["Chunk Map " + str(ChunkMapPointer)];
+    int ChunkMapPointer = ChunkTable["Chunk Map Indices"]["Chunk Map Index " + to_string(ChunkMapIndex + index_offset)];
+    auto& ChunkMap = ChunkTable["Chunk Maps"]["Chunk Map " + to_string(ChunkMapPointer)];
 
     // Define data into struct
-    auto tempType = ChunkTable["Chunk Types"]["Chunk Type " + str(ChunkMap["Chunk Type Index"].j_get(int))];
+    auto tempType = ChunkTable["Chunk Types"]["Chunk Type " + to_string(ChunkMap["Chunk Type Index"].j_get(int))];
     StructData.Type = (tempType == nullptr) ? "" : tempType;
-    auto tempPath = ChunkTable["File Paths"]["File Path " + str(ChunkMap["File Path Index"].j_get(int))];
+    auto tempPath = ChunkTable["File Paths"]["File Path " + to_string(ChunkMap["File Path Index"].j_get(int))];
     StructData.Path = (tempPath == nullptr) ? "" : tempPath;
-    auto tempName = ChunkTable["Chunk Names"]["Chunk Name " + str(ChunkMap["Chunk Name Index"].j_get(int))];
+    auto tempName = ChunkTable["Chunk Names"]["Chunk Name " + to_string(ChunkMap["Chunk Name Index"].j_get(int))];
     StructData.Name = (tempName == nullptr) ? "" : tempName;
 
     std::string Title = "[" + Format3Digits(page_i) + "] " + ((StructData.Type == "nuccChunkNull") ? "nuccChunkNull" : (StructData.Name + " (" + StructData.Type + ")"));
@@ -231,10 +231,10 @@ json ExtractPageData(std::vector<char>& vector_data, json& XfbinJson, size_t& ma
     if (ExtraIndexOffset > 0) {
         auto& XfbinExtra = XfbinJson["Chunk Table"]["Extra Map Indices"];
         for (int i = 0; i < ExtraIndexOffset; i++) {
-            ExtraIndicesJson["Extra Map Indices"]["Extra Indices " + str(i)]["Extra Name"] = XfbinJson["Chunk Table"]["Chunk Names"]["Chunk Name " +
-                str(XfbinExtra["Extra Map Indices " + str(i + extra_index_offset)]["Extra Name Index"].j_get(int))
+            ExtraIndicesJson["Extra Map Indices"]["Extra Indices " + to_string(i)]["Extra Name"] = XfbinJson["Chunk Table"]["Chunk Names"]["Chunk Name " +
+                to_string(XfbinExtra["Extra Map Indices " + to_string(i + extra_index_offset)]["Extra Name Index"].j_get(int))
             ];
-            ExtraIndicesJson["Extra Map Indices"]["Extra Indices " + str(i)]["Extra Map"] = XfbinExtra["Extra Map Indices " + str(i + extra_index_offset)]["Extra Map Index"];
+            ExtraIndicesJson["Extra Map Indices"]["Extra Indices " + to_string(i)]["Extra Map"] = XfbinExtra["Extra Map Indices " + to_string(i + extra_index_offset)]["Extra Map Index"];
         }
         PageChunkJson.merge_patch(ExtraIndicesJson);
     }

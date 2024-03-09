@@ -6,7 +6,9 @@ constexpr bool IsAnyOf(const T& cmp, const Cs& ... others) {
 	return ((cmp == others) || ...);
 }
 
-XFBIN xfbin; // Used across other files.
+// Used across other files.
+XFBIN xfbin;
+std::string game = "ASBR";
 
 int main(int argc, char* argv[]) {
 	std::cout << "~<|  XFBIN Parser++  |>~\n\n"; // header
